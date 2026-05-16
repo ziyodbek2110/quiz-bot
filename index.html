@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viktorina O'yini</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--tg-theme-bg-color, #1a1a2e);
+    color: var(--tg-theme-text-color, #ffffff);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 480px;
+    padding-top: 1rem;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--tg-theme-text-color, #fff);
+  }
+
+  .header p {
+    font-size: 13px;
+    opacity: 0.6;
+    margin-top: 4px;
+  }
+
+  .score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 0.7rem 1.2rem;
+    margin-bottom: 1rem;
+    font-size: 13px;
+    opacity: 0.85;
+  }
+
+  .score-val {
+    font-weight: 700;
+    font-size: 16px;
+    opacity: 1;
+  }
+
+  .progress {
+    height: 6px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 3px;
+    margin-bottom: 1.2rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 6px;
+    background: linear-gradient(90deg, #4ade80, #22d3ee);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  .question-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .q-num {
+    font-size: 11px;
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+  }
+
+  .q-text {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .opt-btn {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 0.9rem 1.2rem;
+    text-align: left;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tg-theme-text-color, #fff);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .opt-btn:active { transform: scale(0.97); }
+
+  .opt-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.13);
+  }
+
+  .opt-btn.correct {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: #4ade80;
+    color: #4ade80;
+  }
+
+  .opt-btn.wrong {
+    background: rgba(248, 113, 113, 0.2);
+    border-color: #f87171;
+    color: #f87171;
+  }
+
+  .opt-letter {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .feedback {
+    padding: 0.8rem 1.2rem;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  .feedback.show { display: block; }
+  .feedback.ok { background: rgba(74,222,128,0.15); color: #4ade80; }
+  .feedback.fail { background: rgba(248,113,113,0.15); color: #f87171; }
+
+  .next-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #4ade80, #22d3ee);
+    border: none;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    cursor: pointer;
+    display: none;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .next-btn.show { display: block; }
+  .next-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  .result-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+  }
+
+  .result-emoji { font-size: 56px; margin-bottom: 1rem; }
+  .result-score { font-size: 40px; font-weight: 800; margin-bottom: 0.5rem; }
+  .result-msg { font-size: 15px; opacity: 0.7; margin-bottom: 2rem; line-height: 1.6; }
+
+  .restart-btn {
+    padding: 0.9rem 2.5rem;
+    background: linear-gradient(135deg, #4ade80, #22d3ee);
+    border: none;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <h1>🧠 Viktorina</h1>
+    <p>Umumiy bilim testi</p>
+  </div>
+  <div id="game-area"></div>
+</div>
+
+<script>
+if (window.Telegram && window.Telegram.WebApp) {
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand();
+}
+
+const questions = [
+  { q: "Dunyo bo'yicha eng katta okean qaysi?", opts: ["Atlantika", "Hind", "Tinch", "Arktika"], ans: 2 },
+  { q: "Quyoshdan uchinchi planeta qaysi?", opts: ["Venera", "Mars", "Yer", "Yupiter"], ans: 2 },
+  { q: "Insonning normal tana harorati qancha?", opts: ["35°C", "36.6°C", "38°C", "40°C"], ans: 1 },
+  { q: "Qaysi element davriy jadvalda birinchi o'rinda turadi?", opts: ["Geliy", "Litiy", "Vodorod", "Kislorod"], ans: 2 },
+  { q: "O'zbekiston poytaxti qaysi shahar?", opts: ["Samarqand", "Buxoro", "Namangan", "Toshkent"], ans: 3 },
+  { q: "Bir yilda nechta oy bor?", opts: ["10", "11", "12", "13"], ans: 2 },
+  { q: "Eng katta sayyora qaysi?", opts: ["Saturn", "Yupiter", "Neptun", "Uran"], ans: 1 },
+  { q: "Suv qaysi haroratda qaynaydi?", opts: ["90°C", "95°C", "100°C", "105°C"], ans: 2 },
+  { q: "Leonardo da Vinchi qaysi asarni yaratgan?", opts: ["Starry Night", "Mona Liza", "The Scream", "Sunflowers"], ans: 1 },
+  { q: "Quyosh sistemasida nechta planeta bor?", opts: ["7", "8", "9", "10"], ans: 1 },
+];
+
+const letters = ["A", "B", "C", "D"];
+let cur = 0, score = 0, answered = false;
+let shuffled = [...questions].sort(() => Math.random() - 0.5);
+
+function render() {
+  const area = document.getElementById('game-area');
+  if (cur >= shuffled.length) {
+    const pct = Math.round((score / shuffled.length) * 100);
+    const emoji = pct >= 80 ? "🏆" : pct >= 50 ? "👏" : "📚";
+    const msg = pct >= 80 ? "Ajoyib! Siz haqiqiy bilimdonSiz!" : pct >= 50 ? "Yaxshi natija, davom eting!" : "Ko'proq o'qish kerak!";
+    area.innerHTML = `
+      <div class="result-card">
+        <div class="result-emoji">${emoji}</div>
+        <div class="result-score">${score} / ${shuffled.length}</div>
+        <div class="result-msg">${msg}<br><small style="font-size:13px">${pct}% to'g'ri javob</small></div>
+        <button class="restart-btn" onclick="restart()">🔄 Qayta boshlash</button>
+      </div>`;
+    return;
+  }
+
+  const q = shuffled[cur];
+  const progress = Math.round((cur / shuffled.length) * 100);
+
+  area.innerHTML = `
+    <div class="score-bar">
+      <span>Savol <span class="score-val">${cur + 1}</span> / ${shuffled.length}</span>
+      <span>Ball: <span class="score-val">${score}</span></span>
+    </div>
+    <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+    <div class="question-card">
+      <div class="q-num">Savol ${cur + 1}</div>
+      <div class="q-text">${q.q}</div>
+    </div>
+    <div class="options">
+      ${q.opts.map((o, i) => `
+        <button class="opt-btn" id="opt-${i}" onclick="pick(${i})">
+          <span class="opt-letter">${letters[i]}</span>${o}
+        </button>`).join('')}
+    </div>
+    <div class="feedback" id="fb"></div>
+    <button class="next-btn" id="nb" onclick="next()">
+      ${cur + 1 < shuffled.length ? "Keyingi savol →" : "Natijani ko'rish →"}
+    </button>`;
+}
+
+function pick(i) {
+  if (answered) return;
+  answered = true;
+  const q = shuffled[cur];
+  const fb = document.getElementById('fb');
+  const nb = document.getElementById('nb');
+  for (let j = 0; j < q.opts.length; j++) {
+    const btn = document.getElementById('opt-' + j);
+    btn.disabled = true;
+    if (j === q.ans) btn.classList.add('correct');
+    else if (j === i) btn.classList.add('wrong');
+  }
+  if (i === q.ans) {
+    score++;
+    fb.textContent = "✅ To'g'ri! Zo'r!";
+    fb.className = 'feedback show ok';
+  } else {
+    fb.textContent = `❌ Noto'g'ri. To'g'ri javob: ${q.opts[q.ans]}`;
+    fb.className = 'feedback show fail';
+  }
+  nb.className = 'next-btn show';
+}
+
+function next() { cur++; answered = false; render(); }
+function restart() { cur = 0; score = 0; answered = false; shuffled = [...questions].sort(() => Math.random() - 0.5); render(); }
+
+render();
+</script>
+</body>
+</html>
