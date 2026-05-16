@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Omad G'ildiragi</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f0f1a;
+  --card:rgba(255,255,255,0.06);
+  --card-border:rgba(255,255,255,0.1);
+  --text:#ffffff;
+  --text-muted:rgba(255,255,255,0.5);
+  --green:#1DB954;
+  --green-dark:#158a3e;
+  --red:#ff4d4d;
+  --gold:#FFD700;
+  --purple:#7F77DD;
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif}
+body{display:flex;flex-direction:column;align-items:center;padding:0 0 2rem}
+
+/* LOGIN */
+#login-screen{width:100%;max-width:420px;padding:2rem 1.2rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem;animation:fadeIn 0.4s ease}
+.logo{font-size:52px;margin-bottom:-0.5rem}
+.logo-title{font-size:28px;font-weight:900;letter-spacing:-0.5px;background:linear-gradient(135deg,#FFD700,#FF8C00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:13px;color:var(--text-muted);margin-top:4px}
+.login-card{width:100%;background:var(--card);border:1px solid var(--card-border);border-radius:20px;padding:1.5rem}
+.login-card h2{font-size:16px;font-weight:700;margin-bottom:1rem;color:var(--text)}
+#name-input{width:100%;padding:0.85rem 1.1rem;border-radius:12px;border:1px solid var(--card-border);background:rgba(255,255,255,0.08);color:#fff;font-size:15px;font-family:'Nunito',sans-serif;outline:none;transition:border-color 0.2s}
+#name-input:focus{border-color:var(--green)}
+#name-input::placeholder{color:rgba(255,255,255,0.3)}
+#start-btn{width:100%;padding:0.9rem;background:linear-gradient(135deg,var(--green),var(--green-dark));border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;margin-top:0.75rem;transition:transform 0.1s,opacity 0.2s;font-family:'Nunito',sans-serif;letter-spacing:0.3px}
+#start-btn:active{transform:scale(0.97)}
+.lb-preview{width:100%;background:var(--card);border:1px solid var(--card-border);border-radius:20px;padding:1.2rem}
+.lb-preview h3{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:0.75rem}
+
+/* GAME */
+#game-screen{width:100%;max-width:420px;padding:1rem 1rem 2rem;display:none;flex-direction:column;align-items:center;gap:0.85rem;animation:fadeIn 0.4s ease}
+#player-bar{width:100%;display:flex;align-items:center;justify-content:space-between}
+#player-name-show{font-size:15px;font-weight:700;color:var(--text)}
+#logout-btn{font-size:12px;color:var(--text-muted);background:none;border:1px solid var(--card-border);border-radius:8px;padding:4px 10px;cursor:pointer;font-family:'Nunito',sans-serif}
+#top-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%}
+.stat-card{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:0.6rem 0.5rem;text-align:center}
+.stat-label{font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted)}
+.stat-val{font-size:18px;font-weight:800;color:var(--text);margin-top:2px}
+
+/* TIMER */
+#timer-wrap{width:100%;background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:0.75rem 1rem;transition:background 0.3s,border-color 0.3s}
+#timer-wrap.empty{background:rgba(255,77,77,0.12);border-color:rgba(255,77,77,0.4)}
+#timer-top{display:flex;align-items:center;justify-content:space-between}
+#timer-left{display:flex;flex-direction:column;gap:2px}
+#timer-label{font-size:13px;font-weight:700}
+#timer-wrap.empty #timer-label{color:var(--red)}
+#timer-sub{font-size:10px;color:var(--text-muted)}
+#timer-countdown{font-size:22px;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums}
+#timer-wrap.empty #timer-countdown{color:var(--red)}
+#progress-wrap{margin-top:0.6rem;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
+#progress-fill{height:4px;background:var(--green);border-radius:2px;transition:width 1s linear,background 0.3s}
+#progress-fill.low{background:var(--red)}
+
+/* EMPTY NOTICE */
+#empty-notice{display:none;width:100%;background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);border-radius:18px;padding:1.5rem;text-align:center}
+#empty-notice.show{display:block}
+#empty-emoji{font-size:40px;margin-bottom:0.5rem}
+#empty-title{font-size:18px;font-weight:800;color:var(--red);margin-bottom:0.3rem}
+#empty-timer{font-size:32px;font-weight:900;color:var(--red);font-variant-numeric:tabular-nums;margin:0.5rem 0;letter-spacing:1px}
+#empty-sub{font-size:13px;color:rgba(255,120,120,0.8)}
+
+/* BONUS */
+#bonus-bar{width:100%;background:rgba(127,119,221,0.15);border:1px solid rgba(127,119,221,0.3);border-radius:14px;padding:0.7rem 1rem;display:flex;align-items:center;justify-content:space-between}
+#bonus-info{display:flex;flex-direction:column;gap:2px}
+#bonus-title{font-size:13px;font-weight:700}
+#bonus-status{font-size:11px;color:var(--text-muted)}
+#bonus-btn{padding:0.45rem 1rem;background:var(--purple);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:opacity 0.2s}
+#bonus-btn:disabled{opacity:0.35;cursor:not-allowed}
+
+/* STREAK */
+#streak-wrap{display:flex;align-items:center;gap:6px}
+.streak-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.15);transition:background 0.3s,transform 0.3s}
+.streak-dot.on{background:var(--gold);transform:scale(1.2)}
+
+/* WHEEL */
+#wheel-wrap{position:relative;width:300px;height:300px;margin:0.5rem 0}
+#needle{position:absolute;top:-16px;left:50%;transform:translateX(-50%);z-index:10;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:34px solid var(--red);filter:drop-shadow(0 2px 6px rgba(255,77,77,0.5))}
+#glow-ring{position:absolute;inset:-8px;border-radius:50%;border:3px solid transparent;transition:all 0.3s}
+#glow-ring.active{border-color:var(--gold);box-shadow:0 0 20px rgba(255,215,0,0.25)}
+#wheel-canvas{border-radius:50%;border:3px solid rgba(255,255,255,0.15);display:block;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+
+/* SPIN BTN */
+#spin-btn{width:150px;height:150px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dark));border:5px solid rgba(255,255,255,0.15);font-size:20px;font-weight:900;color:#fff;cursor:pointer;transition:transform 0.15s,opacity 0.2s;font-family:'Nunito',sans-serif;letter-spacing:1px;box-shadow:0 8px 24px rgba(29,185,84,0.35)}
+#spin-btn:active:not(:disabled){transform:scale(0.92)}
+#spin-btn:disabled{opacity:0.4;cursor:not-allowed;background:#444;border-color:#333;box-shadow:none}
+#spin-label{font-size:11px;font-weight:600;opacity:0.8;margin-top:4px;letter-spacing:0.3px}
+
+/* RESULT */
+#result-box{text-align:center;min-height:60px}
+#result-title{font-size:22px;font-weight:900;color:var(--text);transition:color 0.3s}
+#result-sub{font-size:13px;color:var(--text-muted);margin-top:4px}
+
+/* TABS */
+#tabs{display:flex;width:100%;background:var(--card);border:1px solid var(--card-border);border-radius:12px;overflow:hidden}
+.tab-btn{flex:1;padding:0.55rem;background:transparent;border:none;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:'Nunito',sans-serif;transition:all 0.2s}
+.tab-btn.active{background:rgba(255,255,255,0.1);color:#fff}
+#history-list{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;min-height:36px;padding:0.6rem 0}
+.h-item{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+#leaders-list{display:flex;flex-direction:column;gap:6px;padding:0.6rem 0}
+.leader-row{display:flex;align-items:center;gap:10px;padding:0.5rem 0.75rem;border-radius:12px;background:rgba(255,255,255,0.05)}
+.leader-row.me{border:1px solid rgba(29,185,84,0.5);background:rgba(29,185,84,0.08)}
+.leader-rank{width:22px;font-size:14px;font-weight:700;text-align:center}
+.leader-name{flex:1;font-size:14px;font-weight:600}
+.leader-coins{font-size:13px;font-weight:700;color:var(--gold)}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.jackpot-flash{animation:flash 0.4s ease 5}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:0.15}}
+.bounce{animation:bnc 0.5s ease}
+@keyframes bnc{0%{transform:scale(1)}40%{transform:scale(1.18)}70%{transform:scale(0.93)}100%{transform:scale(1)}}
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;display:none;align-items:center;justify-content:center;padding:1.5rem}
+#modal-overlay.show{display:flex;animation:fadeIn 0.25s ease}
+#modal-box{width:100%;max-width:320px;border-radius:24px;padding:2rem 1.5rem;text-align:center}
+#modal-box.jackpot{background:linear-gradient(135deg,#1a1200,#2d2000);border:2px solid var(--gold);box-shadow:0 0 50px rgba(255,215,0,0.35)}
+#modal-box.omadsiz{background:linear-gradient(135deg,#1a0000,#2a0505);border:2px solid rgba(255,77,77,0.4);box-shadow:0 0 30px rgba(255,77,77,0.15)}
+#modal-emoji{font-size:72px;margin-bottom:0.75rem;display:block;animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275)}
+@keyframes popIn{0%{transform:scale(0) rotate(-10deg)}100%{transform:scale(1) rotate(0deg)}}
+#modal-title{font-size:24px;font-weight:900;margin-bottom:0.5rem}
+#modal-box.jackpot #modal-title{color:var(--gold)}
+#modal-box.omadsiz #modal-title{color:#ff6b6b}
+#modal-coins{font-size:36px;font-weight:900;color:var(--gold);margin:0.5rem 0 0.75rem}
+#modal-msg{font-size:14px;line-height:1.6;margin-bottom:1.5rem;padding:0 0.5rem}
+#modal-box.jackpot #modal-msg{color:rgba(255,230,130,0.9)}
+#modal-box.omadsiz #modal-msg{color:rgba(255,160,160,0.85)}
+#modal-close{padding:0.75rem 2.5rem;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif}
+#modal-box.jackpot #modal-close{background:var(--gold);color:#1a0d00}
+#modal-box.omadsiz #modal-close{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.15)}
+#confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:99;overflow:hidden}
+.cp{position:absolute;width:9px;height:9px;top:-20px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div style="text-align:center">
+    <div class="logo">🎰</div>
+    <div class="logo-title">Omad G'ildiragi</div>
+    <div class="logo-sub">Har 15 daqiqada 5 ta spin!</div>
+  </div>
+
+  <div class="login-card">
+    <h2>O'yinga kirish</h2>
+    <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:1rem">Ismingizni kiriting — natijalaringiz saqlanadi!</p>
+    <input id="name-input" type="text" placeholder="Ismingiz..." maxlength="20" />
+    <button id="start-btn" onclick="startGame()">O'yinni boshlash 🚀</button>
+  </div>
+
+  <div class="lb-preview">
+    <h3>🏆 Liderlar jadvali</h3>
+    <div id="leaders-preview"><p style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center">Hali hech kim o'ynamagan</p></div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+  <div id="player-bar">
+    <div id="player-name-show"></div>
+    <button id="logout-btn" onclick="logout()">Chiqish</button>
+  </div>
+
+  <div id="top-bar">
+    <div class="stat-card"><div class="stat-label">Coin</div><div class="stat-val" id="coins-val">0</div></div>
+    <div class="stat-card"><div class="stat-label">Spin</div><div class="stat-val" id="spins-val">0</div></div>
+    <div class="stat-card"><div class="stat-label">Rekord</div><div class="stat-val" id="best-val">—</div></div>
+    <div class="stat-card"><div class="stat-label">Win%</div><div class="stat-val" id="rate-val">—</div></div>
+  </div>
+
+  <div id="timer-wrap">
+    <div id="timer-top">
+      <div id="timer-left">
+        <div id="timer-label">Spin: <span id="spins-left-val">5</span> / 5</div>
+        <div id="timer-sub">Har 15 daqiqada 5 ta spin</div>
+      </div>
+      <div id="streak-wrap">
+        <div class="streak-dot" id="sd0"></div>
+        <div class="streak-dot" id="sd1"></div>
+        <div class="streak-dot" id="sd2"></div>
+        <div class="streak-dot" id="sd3"></div>
+        <div class="streak-dot" id="sd4"></div>
+      </div>
+      <div id="timer-countdown">—</div>
+    </div>
+    <div id="progress-wrap"><div id="progress-fill" style="width:100%"></div></div>
+  </div>
+
+  <div id="empty-notice">
+    <div id="empty-emoji">⏳</div>
+    <div id="empty-title">Spinlar tugadi!</div>
+    <div id="empty-timer">15:00</div>
+    <div id="empty-sub">Vaqt o'tgandan keyin 5 ta spin qayta beriladi</div>
+  </div>
+
+  <div id="bonus-bar">
+    <div id="bonus-info">
+      <div id="bonus-title">🎁 Kunlik bonus</div>
+      <div id="bonus-status">+300 coin va 5 spin!</div>
+    </div>
+    <button id="bonus-btn" onclick="claimBonus()">Olish</button>
+  </div>
+
+  <div id="wheel-wrap">
+    <div id="glow-ring"></div>
+    <div id="needle"></div>
+    <canvas id="wheel-canvas" width="300" height="300"></canvas>
+  </div>
+
+  <button id="spin-btn" onclick="spin()">
+    SPIN!
+    <div id="spin-label">5 spin qoldi</div>
+  </button>
+
+  <div id="result-box">
+    <div id="result-title">G'ildirakni aylantiring!</div>
+    <div id="result-sub">Omadingizni sinab ko'ring 🍀</div>
+  </div>
+
+  <div id="tabs">
+    <button class="tab-btn active" onclick="switchTab('history')">📋 Natijalar</button>
+    <button class="tab-btn" onclick="switchTab('leaders')">🏆 Liderlar</button>
+    <button class="tab-btn" onclick="switchTab('stats')">📊 Umumiy</button>
+  </div>
+  <div id="tab-history" style="width:100%"><div id="history-list"></div></div>
+  <div id="tab-leaders" style="display:none;width:100%"><div id="leaders-list"></div></div>
+  <div id="tab-stats" style="display:none;width:100%"><div id="stats-content"></div></div>
+</div>
+
+<div id="confetti-wrap"></div>
+<div id="modal-overlay" onclick="closeModal()">
+  <div id="modal-box" onclick="event.stopPropagation()">
+    <span id="modal-emoji">🎰</span>
+    <div id="modal-title"></div>
+    <div id="modal-coins"></div>
+    <div id="modal-msg"></div>
+    <button id="modal-close" onclick="closeModal()">Yopish</button>
+  </div>
+</div>
+
+<script>
+const JACKPOT_MSGS=[
+  {e:'🤑',t:'JACKPOT! ULKAN YUTISH!',m:'Siz bugun eng omadli odamsiz!\nBu pul bilan nimalar qilar edingiz? 😄'},
+  {e:'🎊',t:'JACKPOT! BARAKALLA!',m:'Qo\'shnilaringiz sizga hasad qilsa kerak...\nUlar bilmasa ham! 🤫'},
+  {e:'🚀',t:'JACKPOT! KOSMIK YUTISH!',m:'Oyga uchib ketishingiz mumkin endi!\nNASA bilan bog\'laning! 🌕'},
+  {e:'👑',t:'JACKPOT! SHUHRATINGIZ OSHDI!',m:'Omad sizni tanladi!\nErtaga yana keling, balki yana tushadi? 😏'},
+  {e:'🏆',t:'JACKPOT! REKORDCHI!',m:'Barcha liderlardan o\'tdingiz!\nGinness rekordlar kitobiga kirish vaqti! 📖'},
+  {e:'💎',t:'JACKPOT! OLMOS TOPDING!',m:'1000 coin bir kunda!\nBuni nima deb atash kerak — iste\'dod? Omad? Ikkisi ham! 💪'},
+  {e:'🎯',t:'JACKPOT! NISHONGA TEGDI!',m:'Siz haqiqatan ham g\'ildirakni boshqara olasizmi?!\nSirini aytib bering! 🧐'},
+  {e:'🦁',t:'JACKPOT! SHERday YUTDING!',m:'G\'ildirak sizdan qo\'rqadi!\nKelgandi, ko\'rgandi, yutib ketdi! 😂'},
+];
+
+const OMADSIZ_MSGS=[
+  {e:'😝',t:'Omadsiz!',m:'G\'ildirak kuldi, siz yig\'ladingiz...\nAmmo hayot davom etadi! 😅'},
+  {e:'🙈',t:'Omadsiz!',m:'Ko\'zingizni yumib aylantirmagansiz-ku!\nKo\'zingizni yuming, keyin bosing... 🙉'},
+  {e:'🤡',t:'Omadsiz!',m:'G\'ildirak hazillashdi siz bilan!\nU jiddiy emas, qayta urining! 🎪'},
+  {e:'😭',t:'Omadsiz!',m:'Bu safar omad yo\'q edi...\nLekin keyingisi JACKPOT bo\'lishi mumkin! 🤞'},
+  {e:'🐢',t:'Omadsiz!',m:'Omad bir oz sekin kelmoqda...\nSabrli bo\'ling, u yo\'lda! 🐇'},
+  {e:'🎲',t:'Omadsiz!',m:'G\'ildirak: "Keyingi safar!"\nSiz: "Ha, bilaman..." 😑'},
+  {e:'🌚',t:'Omadsiz!',m:'Qorong\'u kechalar ham tong otadi!\nSizning tong\'ingiz yaqin... 🌅'},
+  {e:'🥲',t:'Omadsiz!',m:'Yig\'lamasdan kula olmaysiz!\nBu maqolni aytgan ham omadsiz tushgan 😂'},
+];
+
+function spawnConfetti(){
+  const wrap=document.getElementById('confetti-wrap');
+  wrap.innerHTML='';
+  const colors=['#FFD700','#FF6B6B','#4ECDC4','#7F77DD','#1DB954','#FF8C00','#fff'];
+  for(let i=0;i<80;i++){
+    const d=document.createElement('div');
+    d.className='cp';
+    d.style.left=Math.random()*100+'vw';
+    d.style.background=colors[Math.floor(Math.random()*colors.length)];
+    d.style.animationDuration=(1.5+Math.random()*2)+'s';
+    d.style.animationDelay=(Math.random()*1.5)+'s';
+    d.style.width=(6+Math.random()*8)+'px';
+    d.style.height=(6+Math.random()*8)+'px';
+    d.style.borderRadius=Math.random()>0.5?'50%':'2px';
+    wrap.appendChild(d);
+    setTimeout(()=>d.remove(),4000);
+  }
+}
+
+function showModal(type, seg){
+  const overlay=document.getElementById('modal-overlay');
+  const box=document.getElementById('modal-box');
+  const emoji=document.getElementById('modal-emoji');
+  const title=document.getElementById('modal-title');
+  const coins=document.getElementById('modal-coins');
+  const msg=document.getElementById('modal-msg');
+
+  box.className='modal-box '+type;
+
+  if(type==='jackpot'){
+    const r=JACKPOT_MSGS[Math.floor(Math.random()*JACKPOT_MSGS.length)];
+    emoji.textContent=r.e;
+    title.textContent=r.t;
+    coins.textContent='+1000 🪙';
+    coins.style.display='block';
+    msg.textContent=r.m;
+    spawnConfetti();
+  } else {
+    const r=OMADSIZ_MSGS[Math.floor(Math.random()*OMADSIZ_MSGS.length)];
+    emoji.textContent=r.e;
+    title.textContent=r.t;
+    coins.style.display='none';
+    msg.textContent=r.m;
+  }
+  overlay.classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.getElementById('confetti-wrap').innerHTML='';
+}
+
+if(window.Telegram&&window.Telegram.WebApp){
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand();
+}
+
+const SEGS=[
+  {label:"100 coin",coins:100,color:"#EF9F27",text:"#2a1a00"},
+  {label:"Omadsiz!",coins:0,color:"#c0392b",text:"#fff"},
+  {label:"50 coin",coins:50,color:"#1D9E75",text:"#002918"},
+  {label:"500 coin",coins:500,color:"#7F77DD",text:"#fff"},
+  {label:"Omadsiz!",coins:0,color:"#c0392b",text:"#fff"},
+  {label:"200 coin",coins:200,color:"#2980b9",text:"#fff"},
+  {label:"10 coin",coins:10,color:"#27ae60",text:"#001a08"},
+  {label:"JACKPOT!",coins:1000,color:"#FFD700",text:"#3a2000"},
+];
+const N=SEGS.length, ARC=(2*Math.PI)/N;
+const cv=document.getElementById('wheel-canvas'), ctx=cv.getContext('2d');
+const CX=150,CY=150,R=140;
+const REFILL_MS=15*60*1000;
+const MAX_SPINS=5;
+const SAVE_KEY='fw2_player';
+const LB_KEY='fw2_lb';
+
+let audioCtx=null;
+function getAC(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return audioCtx;}
+function beep(f,d,v=0.3,t='sine'){
+  const a=getAC();if(!a)return;
+  try{const o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+d);o.start();o.stop(a.currentTime+d);}catch(e){}
+}
+function playTick(s){beep(240+s*3,0.04,0.08,'triangle');}
+function playWin(c){
+  if(c>=1000){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.4,0.5),i*140));}
+  else if(c>=200){[440,554,659].forEach((f,i)=>setTimeout(()=>beep(f,0.3,0.4),i*110));}
+  else if(c>0){beep(523,0.2,0.35);setTimeout(()=>beep(659,0.25,0.35),130);}
+  else{beep(160,0.4,0.2,'sawtooth');}
+}
+function playRefill(){beep(523,0.15,0.3);setTimeout(()=>beep(659,0.15,0.3),160);setTimeout(()=>beep(784,0.2,0.35),320);}
+
+let angle=0, spinning=false;
+let playerName='', totalCoins=0, totalSpins=0, bestWin=0, wins=0, streak=0;
+let spinsLeft=MAX_SPINS, refillAt=null, bonusClaimed=false, bonusDate='';
+let leaderboard=[];
+
+function savePlayer(){
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify({playerName,totalCoins,totalSpins,bestWin,wins,streak,spinsLeft,refillAt,bonusClaimed,bonusDate}));}catch(e){}
+}
+function loadPlayer(name){
+  try{
+    const d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');
+    if(!d||d.playerName!==name)return false;
+    playerName=d.playerName; totalCoins=d.totalCoins||0; totalSpins=d.totalSpins||0;
+    bestWin=d.bestWin||0; wins=d.wins||0; streak=d.streak||0;
+    spinsLeft=d.spinsLeft!=null?d.spinsLeft:MAX_SPINS;
+    refillAt=d.refillAt||null; bonusClaimed=!!d.bonusClaimed; bonusDate=d.bonusDate||'';
+    if(bonusDate!==new Date().toDateString()){bonusClaimed=false;bonusDate='';}
+    if(refillAt&&Date.now()>=refillAt){spinsLeft=MAX_SPINS;refillAt=null;}
+    return true;
+  }catch(e){return false;}
+}
+function loadLB(){try{leaderboard=JSON.parse(localStorage.getItem(LB_KEY)||'[]');}catch(e){leaderboard=[];}}
+function saveLB(){try{localStorage.setItem(LB_KEY,JSON.stringify(leaderboard));}catch(e){}}
+
+function drawWheel(a){
+  ctx.clearRect(0,0,300,300);
+  for(let i=0;i<N;i++){
+    const s=a+i*ARC, e=s+ARC;
+    ctx.beginPath();ctx.moveTo(CX,CY);ctx.arc(CX,CY,R,s,e);ctx.closePath();
+    ctx.fillStyle=SEGS[i].color;ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=2;ctx.stroke();
+    ctx.save();ctx.translate(CX,CY);ctx.rotate(s+ARC/2);
+    ctx.textAlign='right';ctx.fillStyle=SEGS[i].text;
+    ctx.font='700 12px Nunito,sans-serif';
+    ctx.fillText(SEGS[i].label,R-12,5);ctx.restore();
+  }
+  ctx.beginPath();ctx.arc(CX,CY,20,0,2*Math.PI);
+  ctx.fillStyle='#0f0f1a';ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='700 10px Nunito,sans-serif';
+  ctx.textAlign='center';ctx.fillText('GO',CX,CY+4);
+}
+
+function fmt(ms){
+  const tot=Math.max(0,Math.ceil(ms/1000)), m=Math.floor(tot/60), s=tot%60;
+  return m+':'+(s<10?'0':'')+s;
+}
+
+function updateUI(){
+  document.getElementById('spins-left-val').textContent=spinsLeft;
+  document.getElementById('spin-label').textContent=spinsLeft>0?spinsLeft+' spin qoldi':'Spinlar tugadi';
+  document.getElementById('spin-btn').disabled=(spinsLeft<=0||spinning);
+  document.getElementById('coins-val').textContent=totalCoins;
+  document.getElementById('spins-val').textContent=totalSpins;
+  document.getElementById('best-val').textContent=bestWin||'—';
+  document.getElementById('rate-val').textContent=totalSpins>0?Math.round(wins/totalSpins*100)+'%':'—';
+  for(let i=0;i<5;i++){const d=document.getElementById('sd'+i);if(d)d.className='streak-dot'+(i<streak?' on':'');}
+  document.getElementById('bonus-btn').disabled=bonusClaimed;
+  document.getElementById('bonus-status').textContent=bonusClaimed?'Ertaga qayta oling':'+300 coin va 5 spin!';
+}
+
+function updateTimer(){
+  const tw=document.getElementById('timer-wrap');
+  const pf=document.getElementById('progress-fill');
+  const notice=document.getElementById('empty-notice');
+  const cd=document.getElementById('timer-countdown');
+
+  if(spinsLeft>0){
+    tw.classList.remove('empty');notice.classList.remove('show');
+    pf.classList.remove('low');pf.style.width='100%';cd.textContent='—';
+    return;
+  }
+  tw.classList.add('empty');notice.classList.add('show');
+  if(!refillAt){refillAt=Date.now()+REFILL_MS;savePlayer();}
+  const remaining=Math.max(0,refillAt-Date.now());
+  const tf=fmt(remaining);
+  cd.textContent=tf;
+  document.getElementById('empty-timer').textContent=tf;
+  const pct=(1-(remaining/REFILL_MS))*100;
+  pf.style.width=Math.min(100,Math.max(0,pct))+'%';
+  pf.classList.toggle('low',remaining<60000);
+  if(remaining<=0){
+    spinsLeft=MAX_SPINS;refillAt=null;
+    tw.classList.remove('empty');notice.classList.remove('show');
+    pf.classList.remove('low');pf.style.width='100%';
+    document.getElementById('empty-timer').textContent='15:00';
+    playRefill();savePlayer();updateUI();
+  }
+}
+
+function startGame(){
+  const n=document.getElementById('name-input').value.trim();
+  if(!n){document.getElementById('name-input').style.borderColor='#ff4d4d';return;}
+  loadLB();
+  if(!loadPlayer(n)){
+    playerName=n;totalCoins=0;totalSpins=0;bestWin=0;wins=0;streak=0;
+    spinsLeft=MAX_SPINS;refillAt=null;bonusClaimed=false;bonusDate='';
+  }
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('game-screen').style.display='flex';
+  document.getElementById('player-name-show').textContent='Salom, '+playerName+' 👋';
+  drawWheel(angle);updateUI();updateTimer();renderLeaders();
+  setInterval(()=>{updateTimer();},1000);
+}
+
+function logout(){
+  savePlayer();
+  document.getElementById('game-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('name-input').value='';
+}
+
+function claimBonus(){
+  if(bonusClaimed)return;
+  bonusClaimed=true;bonusDate=new Date().toDateString();
+  spinsLeft+=5;totalCoins+=300;
+  if(spinsLeft>0){
+    refillAt=null;
+    document.getElementById('empty-notice').classList.remove('show');
+    document.getElementById('timer-wrap').classList.remove('empty');
+  }
+  beep(523,0.2,0.4);setTimeout(()=>beep(784,0.3,0.45),160);
+  savePlayer();updateUI();updateLeaderboard();
+}
+
+function spin(){
+  if(spinning||spinsLeft<=0)return;
+  getAC();
+  spinning=true;spinsLeft--;totalSpins++;
+  if(spinsLeft===0)refillAt=Date.now()+REFILL_MS;
+  document.getElementById('spin-btn').disabled=true;
+  document.getElementById('result-title').textContent='Aylanmoqda...';
+  document.getElementById('result-sub').textContent='';
+  document.getElementById('glow-ring').classList.add('active');
+
+  const extra=(6+Math.floor(Math.random()*5))*2*Math.PI;
+  const tSeg=Math.floor(Math.random()*N);
+  // Igna yuqorida (-PI/2). Segment i, burchak: angle + i*ARC dan angle + (i+1)*ARC gacha.
+  // Ignani tSeg segmenti ostiga olib kelish uchun:
+  // Kerak: angle + tSeg*ARC + ARC/2 = -PI/2 + k*2PI
+  // angle_final = -PI/2 - tSeg*ARC - ARC/2 + k*2PI
+  const cur = angle % (2*Math.PI);
+  const target = (-Math.PI/2 - tSeg*ARC - ARC/2 + 2*Math.PI*20) % (2*Math.PI);
+  const tAngle = extra + ((target - cur + 2*Math.PI) % (2*Math.PI));
+  const dur=4200, t0=performance.now(), a0=angle;
+  let lastTick=0;
+
+  function ease(t){return 1-Math.pow(1-t,3.5);}
+  function frame(now){
+    const el=now-t0, t=Math.min(el/dur,1);
+    angle=a0+tAngle*ease(t);drawWheel(angle);
+    const spd=(1-t)*15;
+    if(now-lastTick>Math.max(30,270-spd*16)){playTick(spd);lastTick=now;}
+    if(t<1){requestAnimationFrame(frame);}
+    else{
+      // Aniq tekshirish: igna (-PI/2) ostidagi segment
+      const a = ((angle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+      const needleAngle = ((- Math.PI/2) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+      const rel = (needleAngle - a + 2*Math.PI) % (2*Math.PI);
+      const actualSeg = Math.floor(rel / ARC) % N;
+      spinning=false;document.getElementById('glow-ring').classList.remove('active');showResult(actualSeg);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function spawnParticles(color){
+  const ww=document.getElementById('wheel-wrap');
+  for(let i=0;i<18;i++){
+    const d=document.createElement('div');
+    const a=Math.random()*2*Math.PI, dist=70+Math.random()*70;
+    d.style.cssText=`position:absolute;width:8px;height:8px;border-radius:50%;background:${color};left:calc(50% - 4px);top:calc(50% - 4px);pointer-events:none;transition:all 0.75s ease-out;opacity:1;z-index:20`;
+    ww.appendChild(d);
+    requestAnimationFrame(()=>{d.style.transform=`translate(${Math.cos(a)*dist}px,${Math.sin(a)*dist}px) scale(0)`;d.style.opacity='0';});
+    setTimeout(()=>d.remove(),850);
+  }
+}
+
+function showResult(idx){
+  const seg=SEGS[idx];
+  const rt=document.getElementById('result-title'), rs=document.getElementById('result-sub');
+  playWin(seg.coins);spawnParticles(seg.color);
+
+  if(seg.coins>0){
+    totalCoins+=seg.coins;wins++;streak=Math.min(streak+1,5);
+    if(seg.coins>bestWin)bestWin=seg.coins;
+    rt.textContent=seg.label+' yutdingiz! 🎉';
+    rs.textContent=playerName+' — jami: '+totalCoins+' coin';
+    rt.style.color=seg.color;
+    if(seg.coins>=1000){rt.classList.add('jackpot-flash');setTimeout(()=>showModal('jackpot',seg),400);}
+    else rt.classList.remove('jackpot-flash');
+  } else {
+    streak=0;rt.textContent='Omadsiz bu safar 😔';
+    rs.textContent='Qayta urining, '+playerName+'!';
+    rt.style.color='#ff6b6b';rt.classList.remove('jackpot-flash');
+    setTimeout(()=>showModal('omadsiz',seg),300);
+  }
+
+  savePlayer();updateUI();updateLeaderboard();
+
+  const btn=document.getElementById('spin-btn');
+  btn.classList.add('bounce');setTimeout(()=>btn.classList.remove('bounce'),500);
+
+  const list=document.getElementById('history-list');
+  const item=document.createElement('div');
+  item.className='h-item';item.textContent=seg.label;
+  item.style.background=seg.color+'33';item.style.color=seg.text==='#fff'?seg.color:seg.text;
+  item.style.border=`1px solid ${seg.color}55`;
+  list.prepend(item);
+  if(list.children.length>14)list.removeChild(list.lastChild);
+}
+
+function updateLeaderboard(){
+  const idx=leaderboard.findIndex(l=>l.name===playerName);
+  if(idx>=0){if(totalCoins>leaderboard[idx].coins)leaderboard[idx].coins=totalCoins;}
+  else leaderboard.push({name:playerName,coins:totalCoins});
+  leaderboard.sort((a,b)=>b.coins-a.coins);
+  leaderboard=leaderboard.slice(0,10);
+  saveLB();renderLeaders();
+}
+
+function renderLeaders(){
+  const medals=['🥇','🥈','🥉'];
+  const rows=leaderboard.map((l,i)=>`
+    <div class="leader-row${l.name===playerName?' me':''}">
+      <div class="leader-rank">${medals[i]||i+1}</div>
+      <div class="leader-name">${l.name}</div>
+      <div class="leader-coins">${l.coins} 🪙</div>
+    </div>`).join('');
+  const empty='<p style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center;padding:0.5rem">Hali hech kim o\'ynamagan</p>';
+  const html=leaderboard.length?rows:empty;
+  const el=document.getElementById('leaders-list'), pv=document.getElementById('leaders-preview');
+  if(el)el.innerHTML=html;if(pv)pv.innerHTML=html;
+}
+
+function renderStats(){
+  const totalPlayers=leaderboard.length;
+  const totalCoinsAll=leaderboard.reduce((s,l)=>s+l.coins,0);
+  const topPlayer=leaderboard[0]||null;
+  const myRank=leaderboard.findIndex(l=>l.name===playerName)+1;
+
+  const statRows=[
+    {icon:'👥', label:'Jami o\'yinchilar', val: totalPlayers+' kishi'},
+    {icon:'🪙', label:'Jami tarqatilgan coin', val: totalCoinsAll.toLocaleString()+' coin'},
+    {icon:'🏆', label:'Eng yaxshi o\'yinchi', val: topPlayer?topPlayer.name+' ('+topPlayer.coins+' 🪙)':'—'},
+    {icon:'📍', label:'Sizning o\'rningiz', val: myRank>0?myRank+'-o\'rin':'Hali kirmaganmiz'},
+    {icon:'🎰', label:'Sizning coinlaringiz', val: totalCoins+' 🪙'},
+    {icon:'🎯', label:'Jami spin', val: totalSpins+' marta'},
+    {icon:'✅', label:'Yutish foizi', val: totalSpins>0?Math.round(wins/totalSpins*100)+'%':'—'},
+    {icon:'🔥', label:'Eng yaxshi yutish', val: bestWin>0?bestWin+' coin':'—'},
+  ];
+
+  const html=`
+    <div style="display:flex;flex-direction:column;gap:8px;padding:0.6rem 0">
+      ${statRows.map(r=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0.8rem;background:rgba(255,255,255,0.05);border-radius:12px;border:1px solid rgba(255,255,255,0.07)">
+          <span style="font-size:20px;width:28px;text-align:center">${r.icon}</span>
+          <div style="flex:1">
+            <div style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px">${r.label}</div>
+            <div style="font-size:14px;font-weight:700;color:#fff;margin-top:2px">${r.val}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  document.getElementById('stats-content').innerHTML=html;
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',
+    (tab==='history'&&i===0)||(tab==='leaders'&&i===1)||(tab==='stats'&&i===2)
+  ));
+  document.getElementById('tab-history').style.display=tab==='history'?'block':'none';
+  document.getElementById('tab-leaders').style.display=tab==='leaders'?'block':'none';
+  document.getElementById('tab-stats').style.display=tab==='stats'?'block':'none';
+  if(tab==='stats') renderStats();
+}
+
+loadLB();renderLeaders();drawWheel(angle);
+</script>
+</body>
+</html>
